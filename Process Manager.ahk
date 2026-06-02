@@ -1,4 +1,4 @@
-﻿#NoEnv
+#NoEnv
 #SingleInstance Force
 SetWorkingDir %A_ScriptDir%
 
@@ -31,34 +31,53 @@ Menu, ContextMenu, Add
 
 ; --- СУПЕР ПУПЕР X100 ДИЗАЙН (DARK CYBERPUNK THEME) ---
 Gui, Color, 121214, 1E1E22
-Gui, +AlwaysOnTop +Resize -DPIScale
+Gui, +AlwaysOnTop +Resize -DPIScale +HwndMyGuiHwnd ; Добавили дескриптор окна для округления
 
 ; Подключаем сочные шрифты
 Gui, Font, s11 cC5C6C7, Consolas
 ImageListID := IL_Create(100, 10, 0)
 
-; Создаем ListView. Убрали "+c00F5D4", чтобы дефолтный цвет не ломал кастомный рендер
+; Создаем ListView.
 Gui, Add, ListView, x20 y20 r22 w714 vProcessList gListEvent ImageList%ImageListID% +Grid +HwndhwndLV +Checked +Background1E1E22, Icon|Application|Total Memory|Priority|Eco Mode|Main PID
 
-; Секция кнопок управления списком
+; Секция кнопок управления списком (Кастомные черные кнопки через Progress)
 Gui, Font, s10 Bold, Segoe UI
-Gui, Add, Button, x20 y+15 w110 h35 vBtnCheckAll gCheckAll, ✔️ Select All
-Gui, Add, Button, x+10 w120 h35 vBtnUncheckAll gUncheckAll, ❌ Unselect Al
+Gui, Add, Progress, x20 y+15 w110 h35 Background000000 c000000 +HwndBtn1, 100
+Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gCheckAll, ✔️ Select All
 
-; Разделительная неоновая линия
-Gui, Add, Progress, x20 y+15 w714 h2 Background00F5D4 c00F5D4, 100
+Gui, Add, Progress, x+10 w120 h35 Background000000 c000000 +HwndBtn2, 100
+Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gUncheckAll, ❌ Unselect Al
 
-; Мощные кастомные кнопки управления процессами
+; Разделительная линия (Теперь черная!)
+Gui, Add, Progress, x20 y+15 w714 h2 Background000000 c000000, 100
+
+; Мощные кастомные кнопки управления процессами (Черный фон, белый текст)
 Gui, Font, s10 Bold, Segoe UI
-Gui, Add, Button, x20 y+15 w140 h38 gCloseProcess, 💀 Kill Process
-Gui, Add, Button, x+15 w170 h38 gSetRealtime, 卐 Priority: Realtime
-Gui, Add, Button, x+15 w170 h38 gSetLowPriority, 🍃 Priority: Low + Eco
+Gui, Add, Progress, x20 y+15 w140 h38 Background000000 c000000 +HwndBtn3, 100
+Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gCloseProcess, 💀 Kill Process
 
-; Фирменный футер (Теперь окно h720 — ничего не режется!)
+Gui, Add, Progress, x+15 w170 h38 Background000000 c000000 +HwndBtn4, 100
+Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gSetRealtime, 卐 Priority: Realtime
+
+Gui, Add, Progress, x+15 w170 h38 Background000000 c000000 +HwndBtn5, 100
+Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gSetLowPriority, 🍃 Priority: Low + Eco
+
+; Фирменный футер (Цвет изменен с бирюзового на светло-серый cC5C6C7, либо поставь 000000, если нужен черный)
 Gui, Font, s9 Italic, Consolas
-Gui, Add, Text, x20 y+25 w714 Center c00F5D4, — Created by fi6ka —
+Gui, Add, Text, x20 y+25 w714 Center cC5C6C7, — Created by fi6ka —
 
 Gui, Show, w800 h720, Process Manager v1.0.0-beta
+
+; Применяем скругление к кнопкам (8 - радиус скругления)
+for each, hwnd in [Btn1, Btn2, Btn3, Btn4, Btn5]
+{
+    VarSetCapacity(rc, 16, 0)
+    DllCall("GetClientRect", "Ptr", hwnd, "Ptr", &rc)
+    w := NumGet(rc, 8, "Int"), h := NumGet(rc, 12, "Int")
+    hRgn := DllCall("CreateRoundRectRgn", "Int", 0, "Int", 0, "Int", w, "Int", h, "Int", 8, "Int", 8, "Ptr")
+    DllCall("SetWindowRgn", "Ptr", hwnd, "Ptr", hRgn, "Int", true)
+}
+
 GoSub, RefreshList
 SetTimer, AutoRefresh, 3000
 return
@@ -195,9 +214,10 @@ for pid, info in CurrentProcesses
     }
     
     ; --- Палитра цветов (Формат в Win32 API строго BGR: 0xBBGGRR) ---
-    appColor := 0xD4F500  ; Мятный / Светло-зеленый (По умолчанию для процессов с иконками)
-    ramColor := 0xC7C6C5  ; Светло-серый для RAM колонки
-    pidColor := 0x888888  ; Серый для PID колонки
+bgColor  := 0x221E1E  ; Глубокий темно-серый фон для ячеек (1E1E22 в BGR)
+appColor := 0xD4F500  ; Мятный / Светло-зеленый
+ramColor := 0xC7C6C5  ; Светло-серый
+pidColor := 0x555555  ; Более темный серый для PID, чтобы не мозолил глаза
     
     ; Сортировка Priority
     if (info.Priority = "Realtime")
@@ -240,7 +260,7 @@ for pid, info in CurrentProcesses
     }
     
     ; Сохраняем цвета в кэш, привязывая К PID процесса, а не к строке!
-    ProcessColors[pid] := {2: appColor, 3: ramColor, 4: prioColor, 5: ecoColor, 6: pidColor}
+    ProcessColors[pid] := {bg: bgColor, 2: appColor, 3: ramColor, 4: prioColor, 5: ecoColor, 6: pidColor}
 }
 GuiControl, +gListEvent, ProcessList
 
@@ -385,26 +405,28 @@ WM_NOTIFY(wParam, lParam) {
             return CDRF_NOTIFYSUBITEMDRAW
             
         if (drawStage = (CDDS_ITEMPREPAINT | CDDS_SUBITEM)) {
-            ; Получаем индекс строки внутри самого Win32 элемента напрямую
             rowIdx := NumGet(lParam + 0, A_PtrSize * 4, "Ptr") + 1
             colIdx := NumGet(lParam + 0, (A_PtrSize * 5) + 4, "Int") + 1
             
-            ; Вытаскиваем PID процесса из 6-й колонки этой строки, чтобы узнать точный цвет
             VarSetCapacity(LVITEM, 16 + (A_PtrSize * 3), 0)
             NumPut(4, LVITEM, 0, "UInt") ; LVIF_TEXT
-            NumPut(rowIdx - 1, LVITEM, 4, "Int") ; iItem
-            NumPut(5, LVITEM, 8, "Int") ; iSubItem (6-я колонка, индекс 5)
+            NumPut(rowIdx - 1, LVITEM, 4, "Int") 
+            NumPut(5, LVITEM, 8, "Int") 
             VarSetCapacity(textBuf, 16, 0)
-            NumPut(&textBuf, LVITEM, 16 + A_PtrSize, "Ptr") ; pszText
-            NumPut(16, LVITEM, 16 + (A_PtrSize * 2), "Int") ; cchTextMax
+            NumPut(&textBuf, LVITEM, 16 + A_PtrSize, "Ptr") 
+            NumPut(16, LVITEM, 16 + (A_PtrSize * 2), "Int") 
             
-            ; Посылаем сообщение системе LVM_GETITEMTEXT
             DllCall("SendMessage", "Ptr", wParam, "UInt", 0x102D, "Ptr", rowIdx - 1, "Ptr", &LVITEM)
             cellPID := StrGet(&textBuf)
             
-            ; Красим ячейку на основе сохраненной карты цветов PID
-            if (cellPID && ProcessColors.HasKey(cellPID) && ProcessColors[cellPID].HasKey(colIdx)) {
-                NumPut(ProcessColors[cellPID][colIdx], lParam + 0, (A_PtrSize * 8) + 4, "UInt")
+            if (cellPID && ProcessColors.HasKey(cellPID)) {
+                ; 1. КРАСИМ ФОН ЯЧЕЙКИ (Смещение +48 для 64-бит или +32 для 32-бит систем)
+                NumPut(ProcessColors[cellPID].bg, lParam + 0, (A_PtrSize * 8) + 8, "UInt")
+                
+                ; 2. КРАСИМ ТЕКСТ ЯЧЕЙКИ
+                if (ProcessColors[cellPID].HasKey(colIdx)) {
+                    NumPut(ProcessColors[cellPID][colIdx], lParam + 0, (A_PtrSize * 8) + 4, "UInt")
+                }
             }
             return CDRF_DODEFAULT
         }
