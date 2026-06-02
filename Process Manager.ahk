@@ -40,35 +40,27 @@ ImageListID := IL_Create(100, 10, 0)
 ; Создаем ListView.
 Gui, Add, ListView, x20 y20 r22 w714 vProcessList gListEvent ImageList%ImageListID% +Grid +HwndhwndLV +Checked +Background1E1E22, Icon|Application|Total Memory|Priority|Eco Mode|Main PID
 
-; Секция кнопок управления списком (Кастомные черные кнопки через Progress)
+; Секция кнопок управления списком (Черный фон, белый текст + скругление углов)
 Gui, Font, s10 Bold, Segoe UI
-Gui, Add, Progress, x20 y+15 w110 h35 Background000000 c000000 +HwndBtn1, 100
-Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gCheckAll, ✔️ Select All
-
-Gui, Add, Progress, x+10 w120 h35 Background000000 c000000 +HwndBtn2, 100
-Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gUncheckAll, ❌ Unselect Al
+Gui, Add, Text, x20 y+15 w110 h35 Background000000 Center 0x200 cFFFFFF +HwndBtn1 gCheckAll, ✔️ Select All
+Gui, Add, Text, x+10 w120 h35 Background000000 Center 0x200 cFFFFFF +HwndBtn2 gUncheckAll, ❌ Unselect Al
 
 ; Разделительная линия (Теперь черная!)
 Gui, Add, Progress, x20 y+15 w714 h2 Background000000 c000000, 100
 
 ; Мощные кастомные кнопки управления процессами (Черный фон, белый текст)
 Gui, Font, s10 Bold, Segoe UI
-Gui, Add, Progress, x20 y+15 w140 h38 Background000000 c000000 +HwndBtn3, 100
-Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gCloseProcess, 💀 Kill Process
+Gui, Add, Text, x20 y+15 w140 h38 Background000000 Center 0x200 cFFFFFF +HwndBtn3 gCloseProcess, 💀 Kill Process
+Gui, Add, Text, x+15 w170 h38 Background000000 Center 0x200 cFFFFFF +HwndBtn4 gSetRealtime, 卐 Priority: Realtime
+Gui, Add, Text, x+15 w170 h38 Background000000 Center 0x200 cFFFFFF +HwndBtn5 gSetLowPriority, 🍃 Priority: Low + Eco
 
-Gui, Add, Progress, x+15 w170 h38 Background000000 c000000 +HwndBtn4, 100
-Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gSetRealtime, 卐 Priority: Realtime
-
-Gui, Add, Progress, x+15 w170 h38 Background000000 c000000 +HwndBtn5, 100
-Gui, Add, Text, xp yp wp hp BackgroundTrans Center 0x200 cFFFFFF gSetLowPriority, 🍃 Priority: Low + Eco
-
-; Фирменный футер (Цвет изменен с бирюзового на светло-серый cC5C6C7, либо поставь 000000, если нужен черный)
+; Фирменный футер (Цвет изменен с бирюзового на светло-серый cC5C6C7)
 Gui, Font, s9 Italic, Consolas
 Gui, Add, Text, x20 y+25 w714 Center cC5C6C7, — Created by fi6ka —
 
 Gui, Show, w800 h720, Process Manager v1.0.0-beta
 
-; Применяем скругление к кнопкам (8 - радиус скругления)
+; Применяем скругление напрямую к текстовым кнопкам (8 - радиус скругления)
 for each, hwnd in [Btn1, Btn2, Btn3, Btn4, Btn5]
 {
     VarSetCapacity(rc, 16, 0)
